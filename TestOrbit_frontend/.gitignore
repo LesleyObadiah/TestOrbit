@@ -28,3 +28,7 @@ coverage
 *.sw?
 
 *.tsbuildinfo
+
+# Generated JS files from TypeScript sources
+src/**/*.js
+src/**/*.vue.js

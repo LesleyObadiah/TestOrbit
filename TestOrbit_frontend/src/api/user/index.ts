@@ -21,7 +21,7 @@ export const userLogin = (username: string, password: string) : Promise<LoginRes
     return request.post(API.USERLOGIN_URL, { username, password })
 }
 // 获取用户列表
-export const getUserList = (page: Number, page_size: Number) : Promise<GetUserInfoResponse> => {
+export const getUserList = (page: number, page_size: number) : Promise<GetUserInfoResponse> => {
     return request.get(API.USERLIST_URL, 
         { params:{
             page,

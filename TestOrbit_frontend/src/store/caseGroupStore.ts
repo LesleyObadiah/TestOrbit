@@ -25,8 +25,15 @@ export const useCaseGroupStore = defineStore('caseGroup', () => {
   // 🔥 错误状态
   const error = ref<string | null>(null)
 
-  // 🔥 计算属性：步骤列表
-  const steps = computed(() => caseGroupDetail.value?.steps || [])
+  // 🔥 计算属性：步骤列表 - 支持读写
+  const steps = computed({
+    get: () => caseGroupDetail.value?.steps || [],
+    set: (newSteps) => {
+      if (caseGroupDetail.value) {
+        caseGroupDetail.value.steps = newSteps
+      }
+    }
+  })
   
   // 🔥 计算属性：用例组名称
   const caseGroupName = computed(() => caseGroupDetail.value?.name || '')

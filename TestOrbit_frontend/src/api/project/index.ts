@@ -15,7 +15,7 @@ enum API {
 
 
 // 获取项目列表
-export const getProjectList = (page: Number, page_size: Number) : Promise<GetProjectInfoResponse> => {
+export const getProjectList = (page: number, page_size: number) : Promise<GetProjectInfoResponse> => {
     return request.get(API.PROJECTLIST_URL, 
         { params:{
             page,

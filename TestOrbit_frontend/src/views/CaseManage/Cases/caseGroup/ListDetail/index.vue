@@ -54,7 +54,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, onMounted, defineExpose, watch, computed } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import StepDetail from './stepDetail.vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Rank, Delete } from '@element-plus/icons-vue'
@@ -179,20 +179,15 @@ const updateStepName = (stepId: number, newName: string) => {
 
 // 处理步骤保存事件
 const handleStepSaved = (stepId: number, stepData: any) => {
-
-  
   // 首先尝试通过step_id查找步骤
   let stepIndex = steps.value.findIndex(step => step.step_id === stepId);
-
   
   // 如果找不到，再尝试通过id字段查找
   if (stepIndex === -1) {
     stepIndex = steps.value.findIndex(step => (step as any).id === stepId);
-
   }
   
   if (stepIndex !== -1) {
-    // 
     // 合并数据，确保保留原始数据的结构
     const originalStep = steps.value[stepIndex];
     
@@ -200,12 +195,10 @@ const handleStepSaved = (stepId: number, stepData: any) => {
     if (!stepData.step_name || stepData.step_name === '') {
       if (originalStep.step_name) {
         // 如果原步骤有名称，则保留原名称
-        // 
         stepData.step_name = originalStep.step_name;
       } else {
         // 如果原步骤也没有名称，则设置默认名称
         stepData.step_name = `步骤${originalStep.step_order || stepIndex + 1}`;
-        // 
       }
     }
     
@@ -216,22 +209,39 @@ const handleStepSaved = (stepId: number, stepData: any) => {
     // 如果新数据的assertions为空，但原数据有assertions，则保留原数据
     const finalAssertions = newAssertions.length > 0 ? newAssertions : originalAssertions;
     
-
+    // 🔥 关键修复：智能合并params数据，确保不丢失任何参数
+    const originalParams = originalStep.params || {};
+    const newParams = stepData.params || {};
+    const finalParams = {
+      ...originalParams,
+      ...newParams,
+      // 确保关键参数字段不被覆盖为空
+      // header_source 和 query_source 是数组类型，检查 length > 0
+      header_source: (newParams.header_source && newParams.header_source.length > 0) 
+        ? newParams.header_source 
+        : originalParams.header_source || [],
+      query_source: (newParams.query_source && newParams.query_source.length > 0) 
+        ? newParams.query_source 
+        : originalParams.query_source || [],
+      // body_source 是对象类型，可以是空对象 {}，所以检查 !== undefined
+      // 这允许用户显式清空body但保留空对象结构
+      body_source: newParams.body_source !== undefined 
+        ? newParams.body_source 
+        : originalParams.body_source || {}
+    };
     
     const updatedStep = {
       ...originalStep,            // 保持原有数据
       ...stepData,                // 覆盖更新的数据
       step_id: stepId,           // 确保step_id不被修改
       step_order: originalStep.step_order, // 保留原始顺序
+      params: finalParams,       // 🔥 使用智能合并的params
       assertions: finalAssertions // 🔥 使用智能合并的assertions
     };
-    
-
     
     steps.value[stepIndex] = updatedStep;
   } else {
     // 如果找不到匹配的步骤，添加一个新步骤
-
     stepData.step_id = stepId;
     stepData.step_order = steps.value.length + 1;
     steps.value.push(stepData);
@@ -240,7 +250,6 @@ const handleStepSaved = (stepId: number, stepData: any) => {
   // ❌ 移除对caseGroupData的同步更新，避免循环触发
   // 因为caseGroupData.steps会触发props.stepsData变化，导致循环
   // 让用例组保存时统一更新caseGroupData
-
 };
 
 // 获取步骤状态类型
@@ -316,24 +325,8 @@ const saveStepOrder = () => {
 // 保存所有步骤数据的方法
 const saveAllSteps = async () => {
   try {
-    // 获取所有展开的步骤的引用
-    const stepComponents = document.querySelectorAll('.step-item .el-collapse-item__wrap');
-    let allValid = true;
-    
-    // 如果有展开的步骤，先调用其handleSave方法
-    if (stepComponents && stepComponents.length > 0) {
-
-      
-      // 这里我们无法直接访问Vue组件实例，而是通过emit事件的方式来同步数据
-      // 实际数据已经通过handleStepSaved方法更新到steps.value中
-    }
-    
-    if (!allValid) {
-      ElMessage.warning('部分步骤数据验证失败，请检查');
-      return false;
-    }
-    
-    // 返回所有步骤数据
+    // 数据已经通过handleStepSaved方法更新到steps.value中
+    // 直接返回所有步骤数据
     return getStepsData();
   } catch (error) {
     console.error('保存所有步骤时出错:', error);

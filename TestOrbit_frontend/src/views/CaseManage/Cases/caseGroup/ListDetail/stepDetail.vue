@@ -202,10 +202,6 @@ const requestConfig = ref<AddCaseStepRequest>({
 const lastProcessedParamsData = ref<string>('');
 
 watch(() => props.stepParams, (newParams) => {
-  // console.group('props.stepParams:', newParams);
-  // console.group('props.stepParams.params:', newParams?.params);
-  // console.group('props.stepParams.assertions:', newParams?.assertions);
-  
   if (newParams) {
     // 🔥 优化：检测数据是否真正变化，避免重复更新界面
     const currentParamsFingerprint = JSON.stringify({
@@ -217,8 +213,10 @@ watch(() => props.stepParams, (newParams) => {
     });
     
     if (lastProcessedParamsData.value !== currentParamsFingerprint) {
-
       lastProcessedParamsData.value = currentParamsFingerprint;
+      
+      // 🔥 修复：设置标志位，防止watch触发循环更新
+      isUpdatingFromProps.value = true;
       
       // 通过.params访问ApiStepParams的属性
       if (newParams.params) {
@@ -242,17 +240,15 @@ watch(() => props.stepParams, (newParams) => {
           ...newParams,
           step_id: correctStepId  // 确保使用正确的ID
         };
-        
-        // 
-        
       } else {
         console.warn('CaseStep对象中没有params属性！');
       }
-    } else {
-      // 
+      
+      // 🔥 修复：下一个tick后清除标志位
+      setTimeout(() => {
+        isUpdatingFromProps.value = false;
+      }, 50);
     }
-  } else {
-
   }
 }, { deep: true, immediate: true });
 
@@ -269,7 +265,12 @@ const resetSyncFlag = () => {
 
 // 监听页面输入框变化，实时同步到step对象（优化频率）
 watch([stepName, UrlInput, address, method], () => {
-  if (step.value && step.value.params && !isSyncingToParent.value) {
+  // 🔥 修复：如果正在从props更新，跳过同步，防止循环更新
+  if (isUpdatingFromProps.value || isSyncingToParent.value) {
+    return;
+  }
+  
+  if (step.value && step.value.params) {
     // 实时同步页面输入框的值到step对象
     step.value.step_name = stepName.value.trim();
     step.value.params.host = UrlInput.value.trim();
@@ -293,8 +294,7 @@ watch([stepName, UrlInput, address, method], () => {
         clearTimeout(syncTimeoutId.value);
       }
       syncTimeoutId.value = setTimeout(() => {
-        if (step.value && step.value.step_id) {
-
+        if (step.value && step.value.step_id && !isUpdatingFromProps.value) {
           emit('step-saved', step.value.step_id, step.value);
           resetSyncFlag(); // 确保同步标志被重置
         }

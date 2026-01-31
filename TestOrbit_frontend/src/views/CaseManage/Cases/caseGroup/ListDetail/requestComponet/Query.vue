@@ -220,9 +220,13 @@ const applyBulkEdit = () => {
   }
 };
 
-// 组件挂载时，初始化发送query数据给父组件
+// 组件挂载时，只有当有有效数据时才发送给父组件
 onMounted(() => {
-  updateQuerys();
+  const enabledQuerys = getEnabledQuerys();
+  // 只有当有有效的query数据时才通知父组件
+  if (Object.keys(enabledQuerys).length > 0) {
+    updateQuerys();
+  }
 });
 </script>
 

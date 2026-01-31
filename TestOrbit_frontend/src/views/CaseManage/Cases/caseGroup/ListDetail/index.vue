@@ -216,12 +216,15 @@ const handleStepSaved = (stepId: number, stepData: any) => {
       ...originalParams,
       ...newParams,
       // 确保关键参数字段不被覆盖为空
+      // header_source 和 query_source 是数组类型，检查 length > 0
       header_source: (newParams.header_source && newParams.header_source.length > 0) 
         ? newParams.header_source 
         : originalParams.header_source || [],
       query_source: (newParams.query_source && newParams.query_source.length > 0) 
         ? newParams.query_source 
         : originalParams.query_source || [],
+      // body_source 是对象类型，可以是空对象 {}，所以检查 !== undefined
+      // 这允许用户显式清空body但保留空对象结构
       body_source: newParams.body_source !== undefined 
         ? newParams.body_source 
         : originalParams.body_source || {}
@@ -322,24 +325,8 @@ const saveStepOrder = () => {
 // 保存所有步骤数据的方法
 const saveAllSteps = async () => {
   try {
-    // 获取所有展开的步骤的引用
-    const stepComponents = document.querySelectorAll('.step-item .el-collapse-item__wrap');
-    const allValid = true;
-    
-    // 如果有展开的步骤，先调用其handleSave方法
-    if (stepComponents && stepComponents.length > 0) {
-
-      
-      // 这里我们无法直接访问Vue组件实例，而是通过emit事件的方式来同步数据
-      // 实际数据已经通过handleStepSaved方法更新到steps.value中
-    }
-    
-    if (!allValid) {
-      ElMessage.warning('部分步骤数据验证失败，请检查');
-      return false;
-    }
-    
-    // 返回所有步骤数据
+    // 数据已经通过handleStepSaved方法更新到steps.value中
+    // 直接返回所有步骤数据
     return getStepsData();
   } catch (error) {
     console.error('保存所有步骤时出错:', error);

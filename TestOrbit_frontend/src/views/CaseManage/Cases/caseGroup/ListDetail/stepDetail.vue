@@ -50,7 +50,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, watch } from 'vue'
+import { ref, watch, nextTick } from 'vue'
 import { ElMessage } from 'element-plus'
 import ParamCard from './paramCard.vue'
 import ResponseCard from './responseCard.vue'
@@ -111,10 +111,10 @@ watch(
       isUpdatingFromProps.value = true;
       stepName.value = newStepName;
       
-      // 下一个tick后清除标志位
-      setTimeout(() => {
+      // 使用nextTick等待Vue的DOM更新周期完成后清除标志位
+      nextTick(() => {
         isUpdatingFromProps.value = false;
-      }, 0);
+      });
     }
   },
   { immediate: true }
@@ -244,10 +244,10 @@ watch(() => props.stepParams, (newParams) => {
         console.warn('CaseStep对象中没有params属性！');
       }
       
-      // 🔥 修复：下一个tick后清除标志位
-      setTimeout(() => {
+      // 🔥 修复：使用nextTick等待Vue的DOM更新周期完成后清除标志位
+      nextTick(() => {
         isUpdatingFromProps.value = false;
-      }, 50);
+      });
     }
   }
 }, { deep: true, immediate: true });
